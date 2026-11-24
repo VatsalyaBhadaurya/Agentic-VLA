@@ -213,5 +213,43 @@ def test_config_c_orchestrator_uses_memory(tmp_path):
     assert mem.retrieve("pick up the red block", rep["scene_graph"]) is not None
 
 
+# -- M5: benchmark metrics -------------------------------------------------------------
+def _mk_report(seed, success, retries=0, failures=None, subtasks_planned=2, subtasks_completed=2):
+    return {
+        "seed": seed, "success": success, "duration_s": 10.0, "policy_calls": 20,
+        "subtasks_planned": subtasks_planned, "subtasks_completed": subtasks_completed,
+        "retries": retries, "replans": 0, "failure_history": failures or [],
+    }
+
+
+def test_aggregate_metrics():
+    from agentic_vla.eval import aggregate
+    reports = [
+        _mk_report(0, True),
+        _mk_report(1, False, retries=3,
+                   failures=[{"category": "GRASP_FAILED"}, {"category": "GRASP_FAILED"}],
+                   subtasks_completed=1),
+        _mk_report(2, True, retries=1, failures=[{"category": "OBJECT_SLIPPED"}]),
+    ]
+    agg = aggregate(reports)
+    assert agg["episodes"] == 3
+    assert abs(agg["task_success_rate"] - 2 / 3) < 1e-9
+    assert agg["total_failed_grasps"] == 2
+    assert agg["total_retries"] == 4
+    assert agg["failure_distribution"]["GRASP_FAILED"] == 2
+    # one of two failing-recovery episodes recovered (seed 2 had a failure but succeeded)
+    assert agg["recovery_success_rate"] == 0.5
+
+
+def test_format_comparison_table():
+    from agentic_vla.eval import aggregate, format_comparison
+    a = aggregate([_mk_report(0, True), _mk_report(1, False)])
+    b = aggregate([_mk_report(0, True), _mk_report(1, True)])
+    table = format_comparison({"A": a, "B": b})
+    assert "Task success rate" in table
+    assert "A baseline" in table and "B agentic" in table
+    assert "50.0%" in table and "100.0%" in table
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
