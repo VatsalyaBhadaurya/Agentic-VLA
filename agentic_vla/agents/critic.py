@@ -12,8 +12,12 @@ M2: rules-first. M3 adds an LLM to reason about ambiguous failures.
 """
 from __future__ import annotations
 
+from typing import get_args
+
 from ..envs import LiberoEnv
-from ..schemas import CriticMessage, ExecutorMessage
+from ..schemas import CriticMessage, ExecutorMessage, FailureCategory
+
+_VALID_CATEGORIES = set(get_args(FailureCategory))
 
 
 class CriticAgent:
@@ -74,13 +78,29 @@ class CriticAgent:
                 confidence=None,
             )
 
-        # budget for this subtask exhausted
+        # budget for this subtask exhausted — optionally refine diagnosis with the LLM
+        category = "TASK_STATE_MISMATCH"
+        recommendation = "Reobserve, replan, or try an alternative strategy."
+        if self.llm is not None:
+            from .llm_backend import diagnose_with_llm
+
+            diag = diagnose_with_llm(
+                self.llm,
+                exec_summary=exec_msg.reason,
+                env_success=env_success,
+            )
+            cat = diag.get("failure_category")
+            if cat in _VALID_CATEGORIES:
+                category = cat
+            if diag.get("recommended_next_action"):
+                recommendation = diag["recommended_next_action"]
+
         return CriticMessage(
             status="RECOVERY_REQUIRED",
             reason="Execution budget for this subtask exhausted without success.",
-            failure_category="TASK_STATE_MISMATCH",
+            failure_category=category,
             evidence=[oracle_note] if oracle_note else [],
             oracle_assisted=oracle_assisted,
-            recommended_next_action="Reobserve, replan, or try an alternative strategy.",
+            recommended_next_action=recommendation,
             confidence=None,
         )

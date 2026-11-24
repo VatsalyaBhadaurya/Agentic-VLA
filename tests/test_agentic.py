@@ -128,5 +128,51 @@ def test_orchestrator_failure_and_recovery_budget():
     assert len(rep["failure_history"]) >= 1
 
 
+# -- M3: LLM-backed planner/critic (fake LLM, no transformers needed) ------------------
+class FakeLLM:
+    residency = "none"
+
+    def __init__(self, response):
+        self.response = response
+        self.calls = 0
+
+    def generate(self, prompt, system=None):
+        self.calls += 1
+        return self.response
+
+    def unload(self):
+        pass
+
+
+def test_llm_planner_parses_strict_json():
+    from agentic_vla.agents.llm_backend import plan_with_llm
+    llm = FakeLLM('Here you go: {"subtasks":[{"id":"s1","description":"open drawer",'
+                  '"completion_condition":"drawer open"},{"id":"s2","description":"place",'
+                  '"completion_condition":"in drawer"}]}')
+    msg = plan_with_llm(llm, "put the block in the drawer", {"objects": []})
+    validate_message(msg)
+    assert len(msg.subtasks) == 2
+    assert "LLM decomposition" in msg.reason
+
+
+def test_llm_planner_falls_back_on_garbage():
+    from agentic_vla.agents.llm_backend import plan_with_llm
+    llm = FakeLLM("sorry I cannot produce JSON")
+    msg = plan_with_llm(llm, "pick up the red block and place it in the drawer", None)
+    validate_message(msg)
+    assert len(msg.subtasks) >= 1                     # rules fallback kicked in
+
+
+def test_critic_llm_diagnosis_rejects_invalid_category():
+    from agentic_vla.agents.llm_backend import diagnose_with_llm
+    llm = FakeLLM('{"failure_category":"NOT_A_REAL_CATEGORY",'
+                  '"recommended_next_action":"regrasp","reason":"x"}')
+    diag = diagnose_with_llm(llm, "no success", False)
+    assert diag["failure_category"] == "NOT_A_REAL_CATEGORY"   # raw passthrough
+    # the critic itself validates against the taxonomy:
+    from agentic_vla.agents.critic import _VALID_CATEGORIES
+    assert "NOT_A_REAL_CATEGORY" not in _VALID_CATEGORIES
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
