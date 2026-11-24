@@ -174,5 +174,44 @@ def test_critic_llm_diagnosis_rejects_invalid_category():
     assert "NOT_A_REAL_CATEGORY" not in _VALID_CATEGORIES
 
 
+# -- M4: episodic memory ---------------------------------------------------------------
+def test_memory_store_and_retrieve(tmp_path):
+    from agentic_vla.memory import EpisodicMemory
+    mem = EpisodicMemory(str(tmp_path / "mem"))
+
+    class _S:
+        selected_skill = "full_task"
+
+    mem.store(_S(), {
+        "task_id": "t1", "instruction": "pick up the red block and place it in the drawer",
+        "scene_graph": {"objects": [{"id": "red_block"}, {"id": "drawer"}]},
+        "subtasks_completed": 3, "success": True, "failure_history": [],
+        "policy_calls": 40, "duration_s": 12.0,
+    })
+    hint = mem.retrieve("pick up the red block and put it in the drawer",
+                        {"objects": [{"id": "red_block"}, {"id": "drawer"}]}, k=3)
+    assert hint is not None
+    assert hint["advisory"] is True          # advisory only, never authoritative
+    assert "full_task" in hint["suggested_skills"]
+
+
+def test_memory_empty_returns_none(tmp_path):
+    from agentic_vla.memory import EpisodicMemory
+    mem = EpisodicMemory(str(tmp_path / "mem2"))
+    assert mem.retrieve("anything", {"objects": []}) is None
+
+
+def test_config_c_orchestrator_uses_memory(tmp_path):
+    from agentic_vla.memory import EpisodicMemory
+    mem = EpisodicMemory(str(tmp_path / "mem3"))
+    env = FakeEnv("pick up the red block", success_after=2)
+    orch = Orchestrator(env, FakeRunner(), chunk_steps=3, max_chunks=3,
+                        retry_budget=2, memory=mem)
+    rep = orch.run(seed=0)
+    assert rep["success"] is True
+    # episode was persisted and is retrievable afterwards
+    assert mem.retrieve("pick up the red block", rep["scene_graph"]) is not None
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
