@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+lerobot_env/
+
+# Model / data caches
+*.ckpt
+*.safetensors
+*.pt
+*.pth
+*.gguf
+checkpoints/
+.cache/
+hf_cache/
+
+# Runtime artifacts
+runs/
+logs/
+*.log
+outputs/
+episodes/
+memory_store/
+*.mp4
+*.gif
+
+# Interface verification output (machine-specific)
+interface_report.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

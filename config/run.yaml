@@ -1,0 +1,24 @@
+# Run / orchestration configuration.
+
+config: B                       # A (baseline) | B (agentic) | C (agentic + memory)
+
+loop:
+  # OBSERVE -> INFER -> ACT -> OBSERVE -> VERIFY, chunked (spec §4).
+  verify_every_chunk: true
+  max_chunks_per_subtask: 20
+
+recovery:
+  retry_budget: 3               # per recoverable subtask (spec §7)
+  reobserve_before_retry: true
+  forbid_identical_retry: true  # never repeat the exact failed action
+
+memory:
+  enabled: false                # overridden to true for config C
+  store_dir: memory_store
+  retrieve_k: 3
+
+logging:
+  run_dir: runs
+  save_video: true
+  save_trajectory: true
+  oracle_diagnostics: true      # labeled oracle-assisted; excluded from vision-only claims

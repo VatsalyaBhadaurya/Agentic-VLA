@@ -1,0 +1,41 @@
+# Agentic VLA — Python 3.10 project environment.
+# Torch is installed separately with the CUDA 12.1 wheel (matches the verified machine
+# baseline: torch 2.4.1+cu121 on an RTX 4050). Install torch FIRST:
+#
+#   pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
+#
+# then:  pip install -r requirements.txt
+
+# --- Core policy stack ---
+lerobot[smolvla]            # provides SmolVLA policy + lerobot-eval + libero env wrapper
+transformers>=4.44
+safetensors
+accelerate
+num2words
+
+# --- Reasoning LLM (Qwen2.5-3B, 4-bit via bitsandbytes) ---
+bitsandbytes; platform_system != "Windows"   # Windows: see note below
+sentencepiece
+einops
+
+# --- Simulation ---
+mujoco>=3.2,<3.3
+# robosuite is pulled in by LIBERO's own setup.py at its pinned version.
+# LIBERO itself is installed editable from the Adaptive-MoE tree:
+#   pip install -e D:/vatty/work/Adaptive-MoE/LIBERO
+
+# --- Orchestration / schemas / config ---
+pydantic>=2.5
+pyyaml
+numpy<2.0                   # robosuite/LIBERO are not yet numpy-2 clean
+imageio[ffmpeg]             # trajectory video dumps
+tqdm
+
+# --- Dev ---
+pytest
+
+# NOTE (Windows + 4-bit): bitsandbytes CUDA support on Windows is version-sensitive.
+# If 4-bit loading fails, fall back options (see DESIGN.md §1, V1-b/V1-c):
+#   - run the reasoning LLM via Ollama  (ollama run qwen2.5:3b-instruct-q4_K_M)
+#   - or load Qwen2.5-3B in fp16 on CPU (llama-cpp-python with a GGUF).
+# The LLM backend is pluggable in agentic_vla/agents/llm_backend.py.

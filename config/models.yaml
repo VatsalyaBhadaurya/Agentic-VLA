@@ -1,0 +1,25 @@
+# Model configuration. Residency mode V1-a (DESIGN.md §1, §13).
+
+policy:
+  checkpoint: lerobot/smolvla_base
+  device: cuda
+  dtype: bfloat16
+  n_action_steps: 50            # action chunk size [TO-VERIFY] against checkpoint config
+  # Executor passes the ORIGINAL LIBERO task instruction to the policy (DESIGN.md P1).
+  use_original_instruction: true
+
+reasoning_llm:
+  # Used by Planner/Critic only where rules are insufficient.
+  backend: transformers         # one of: transformers | ollama | llama_cpp
+  model: Qwen/Qwen2.5-3B-Instruct
+  quantization: 4bit            # bitsandbytes nf4; falls back per requirements.txt note
+  device: cuda
+  max_new_tokens: 512
+  # V1-a: time-sliced — loaded lazily, unloaded while SmolVLA executes a chunk.
+  residency: time_sliced
+  fallback_model: Qwen/Qwen2.5-1.5B-Instruct   # if 3B footprint is too tight
+
+perception:
+  # V1-a: reuse SmolVLA's VLM backbone; no dedicated detector in Phase 1.
+  backend: smolvla_vlm
+  confidence_threshold: 0.4
