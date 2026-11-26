@@ -72,14 +72,19 @@ class SmolVLARunner:
         return int(np.prod(shp)) if shp else None
 
     def _default_camera_map(self) -> dict[str, str]:
-        """Best-effort LIBERO->policy camera mapping; verify against interface_report."""
-        libero_cams = ["agentview_image", "robot0_eye_in_hand_image"]
-        keys = self.expected_image_keys or ["observation.images.image"]
-        mapping: dict[str, str] = {}
-        for i, pk in enumerate(keys):
-            if i < len(libero_cams):
-                mapping[libero_cams[i]] = pk
-        return mapping
+        """LIBERO camera -> policy image key.
+
+        Verified against lerobot/envs/libero.py: LIBERO exposes `agentview_image` (main)
+        and `robot0_eye_in_hand_image` (wrist), mapped to the policy's `image` / `image2`
+        inputs. NOTE: the raw `lerobot/smolvla_base` config advertises placeholder keys
+        `camera1/2/3`; the LIBERO-adapted policy uses `observation.images.image[2]`. Pass
+        an explicit `camera_map` when the loaded checkpoint differs (fail-loud in
+        build_batch if a mapped key is absent). See DESIGN.md section 0a.
+        """
+        return {
+            "agentview_image": "observation.images.image",
+            "robot0_eye_in_hand_image": "observation.images.image2",
+        }
 
     # -- episode lifecycle -------------------------------------------------------------
     def reset(self) -> None:

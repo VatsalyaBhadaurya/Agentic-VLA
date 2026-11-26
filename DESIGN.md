@@ -29,8 +29,36 @@ inside the project venv (LIBERO + robosuite 1.4.0 + mujoco 2.3.7, GLFW offscreen
 Windows setup snags (robosuite `/tmp` log, bundled `mujoco.dll`, forced `MUJOCO_GL=egl`,
 LIBERO first-run prompt) are resolved idempotently by `scripts/setup_windows_env.py`.
 
-The **policy half** (SmolVLA input/output feature contract) is verified separately once
-`lerobot[smolvla]` finishes installing — same script, `policy` section of the report.
+### Policy contract (SmolVLA `lerobot/smolvla_base`) — measured
+
+| Field | Value |
+|---|---|
+| Params / dtype | **450 M**, `bfloat16` |
+| Action chunk | `n_action_steps = chunk_size = 50` |
+| Default input features | `observation.state` **[6]**, `observation.images.camera{1,2,3}` [3,256,256] |
+| Default output | `action` **[6]** |
+| Normalization | VISUAL=IDENTITY, STATE=MEAN_STD, ACTION=MEAN_STD |
+
+**⚠ Honest mismatch (the §4 "mapping risk", now confirmed).** The *base* checkpoint's
+saved config advertises 6-D action / 6-D state / 3 cameras, while **LIBERO is 7-D action,
+~9-D proprio, 2 cameras**. `lerobot/smolvla_base` is a **generic pretrain, not finetuned
+on LIBERO**. The correct way to run it on LIBERO is LeRobot's own adapter
+`lerobot/envs/libero.py` + eval pipeline, which:
+- builds the policy from the **env's** features (7-D action), SmolVLA internally **pads**
+  state/action to its max dims — so 6-vs-7 is handled, not silently reshaped;
+- maps cameras `agentview_image→image`, `robot0_eye_in_hand_image→image2`;
+- uses **relative (delta) OSC control**, a 10-step settle after reset, and fixed
+  `init_states` for reproducibility.
+
+Consequences honored in this repo:
+- **Config A** is run via LeRobot's validated eval path (`lerobot-eval`/`lerobot_eval`),
+  not a hand-rolled normalization, to avoid exactly the silent-reshape the spec forbids.
+- Our own `smolvla_runner` carries the correct camera map (`image`/`image2`) and a
+  fail-loud state-dim guard; it is used by the agentic loop and must be paired with a
+  LIBERO-compatible policy processor before producing scored numbers.
+- A **generic base checkpoint zero-shot on LIBERO is expected to score ~0%** (no LIBERO
+  finetuning, no LIBERO normalization stats). That is a truthful baseline, not a failure
+  of the pipeline — a LIBERO-finetuned SmolVLA checkpoint is required for meaningful SR.
 
 ---
 
