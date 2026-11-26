@@ -36,7 +36,28 @@ working `torch 2.6.0+cu124`, CUDA available). Installed:
 | `scripts/00_verify_interfaces.py` policy half | ✓ chunk 50; input/output features captured |
 | lerobot-eval pipeline (SmolVLA→LIBERO) | builds all 10 vec envs + policy, then **correctly stops at the feature validator** |
 
-## The honest SmolVLA-on-LIBERO finding
+## ✅ SmolVLA driving the arm on MuJoCo — SUCCESS (measured)
+
+Using the **LIBERO-finetuned** checkpoint `HuggingFaceVLA/smolvla_libero` (2 cameras
+`image`/`image2`, 7-D action, 8-D state — matches LIBERO, passes the feature validator):
+
+```
+lerobot-eval --policy.path=<snapshot> --env.type=libero --env.task=libero_object \
+             --env.task_ids="[0]" --eval.n_episodes=1 --policy.device=cuda
+```
+
+| Metric | Value |
+|---|---|
+| Task | `pick up the alphabet soup and place it in the basket` (libero_object, task 0) |
+| **Success (official LIBERO predicate)** | **100% — 1/1 episode**, solved at step ~185/280 |
+| avg_sum_reward / avg_max_reward | 1.0 / 1.0 |
+| Wall time | 148 s on the RTX 4050 (~1.3 policy steps/s) |
+| Video | `outputs/eval/2026-11-27/03-22-03_libero_smolvla/.../eval_episode_0.mp4` |
+
+Result saved at `runs/smolvla_libero_object_task0_1ep.json`. This is the genuine Config A
+baseline: the policy closed the loop on MuJoCo and completed the manipulation task.
+
+## The honest SmolVLA-on-LIBERO finding (base vs finetuned)
 
 `lerobot/smolvla_base` is a **generic pretrain, not LIBERO-finetuned**. Its config
 requires **3 cameras (`camera1/2/3`), 6-D state, 6-D action** with its own MEAN_STD

@@ -1,0 +1,25 @@
+{
+  "description": "Config A baseline: finetuned SmolVLA -> LIBERO on MuJoCo (measured)",
+  "policy": "HuggingFaceVLA/smolvla_libero",
+  "env": "libero_object",
+  "task_id": 0,
+  "instruction": "pick up the alphabet soup and place it in the basket",
+  "n_episodes": 1,
+  "device": "cuda (RTX 4050, 6GB)",
+  "results": {
+    "pc_success": 100.0,
+    "avg_sum_reward": 1.0,
+    "avg_max_reward": 1.0,
+    "successes": [true],
+    "success_step": 185,
+    "max_steps": 280,
+    "eval_s": 148.22,
+    "throughput_it_s": 1.3
+  },
+  "scoring": "official LIBERO success predicate (vision-only; oracle state not used)",
+  "artifacts": {
+    "video": "outputs/eval/2026-11-27/03-22-03_libero_smolvla/videos/libero_object_0/eval_episode_0.mp4",
+    "eval_info": "outputs/eval/2026-11-27/03-22-03_libero_smolvla/eval_info.json"
+  },
+  "notes": "Run via lerobot-eval with a LIBERO-finetuned SmolVLA (2 cameras image/image2, 7-D action, 8-D state) which passes lerobot's feature validator. The generic smolvla_base checkpoint is NOT runnable on LIBERO (3-cam/6-D config); see RUN_NOTES.md."
+}
