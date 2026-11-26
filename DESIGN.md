@@ -9,6 +9,31 @@
 
 ---
 
+## 0a. VERIFIED interfaces (measured on MuJoCo, 2026-11-27)
+
+Env half confirmed by running `scripts/00_verify_interfaces.py --suite libero_object`
+inside the project venv (LIBERO + robosuite 1.4.0 + mujoco 2.3.7, GLFW offscreen). The
+`[TO-VERIFY]` tags in §3 below now resolve to these **measured** values:
+
+| Contract | Measured value |
+|---|---|
+| Suite `libero_object` | 10 tasks; task 0 = `pick_up_the_alphabet_soup_and_place_it_in_the_basket` |
+| Language instruction | "pick up the alphabet soup and place it in the basket" |
+| Action space | **7-D**, bounds `[-1, 1]` on every dim (OSC_POSE + gripper) |
+| `env.step()` return | **4-tuple** `(obs, reward: float, done: bool, info: {})` |
+| Image obs keys | `agentview_image`, `robot0_eye_in_hand_image` — **256×256×3 uint8** |
+| Proprio obs keys | `robot0_eef_pos`, `robot0_eef_quat`, `robot0_gripper_qpos` (+ joints, qvel) |
+| Oracle (diagnostics-only) | `object-state`, per-object `*_pos/_quat/_to_robot0_eef_*` |
+| Success signal | `env.check_success()` — the official scoring predicate ✓ |
+
+Windows setup snags (robosuite `/tmp` log, bundled `mujoco.dll`, forced `MUJOCO_GL=egl`,
+LIBERO first-run prompt) are resolved idempotently by `scripts/setup_windows_env.py`.
+
+The **policy half** (SmolVLA input/output feature contract) is verified separately once
+`lerobot[smolvla]` finishes installing — same script, `policy` section of the report.
+
+---
+
 ## 0. Environment Baseline (measured, 2026-11-24)
 
 | Component | Finding | Notes |
