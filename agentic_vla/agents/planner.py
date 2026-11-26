@@ -63,3 +63,29 @@ class PlannerAgent:
         from .llm_backend import plan_with_llm
 
         return plan_with_llm(self.llm, instruction, scene_graph)
+
+
+class SingleTaskPlanner:
+    """Planner for the single end-to-end policy setup (design P1).
+
+    Emits exactly one `full_task` subtask so the orchestrator runs SmolVLA to completion
+    and the critic verifies OVERALL success via the official LIBERO signal. Used when the
+    executable capability is the whole task (the LIBERO env auto-resets on success, so
+    separate per-subtask rollouts are not possible with one policy).
+    """
+
+    name = "planner"
+
+    def plan(self, instruction: str, scene_graph: dict | None = None) -> PlannerMessage:
+        return PlannerMessage(
+            status="PLANNED",
+            reason="Single end-to-end policy: execute the whole task, verify overall success.",
+            subtasks=[
+                SubtaskSpec(
+                    id="s1",
+                    description=instruction,
+                    completion_condition="LIBERO official success predicate is true",
+                )
+            ],
+            confidence=None,
+        )

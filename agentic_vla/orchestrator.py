@@ -43,11 +43,17 @@ class Orchestrator:
         max_chunks: int = 20,
         use_oracle_diagnostics: bool = True,
         memory=None,
+        planner=None,
     ):
         self.env = env
         self.runner = runner
         self.registry = SkillRegistry(policy_checkpoint=runner_checkpoint(runner))
-        self.planner = PlannerAgent(llm=llm)
+        # A custom planner may be injected. With a single end-to-end policy (design P1),
+        # SmolVLA executes the whole task from the original instruction and the LIBERO env
+        # auto-resets on success — so a multi-subtask plan cannot be executed as separate
+        # rollouts. In that setup, inject a planner that yields one `full_task` subtask;
+        # the planner's richer decomposition still informs verification/recovery reasoning.
+        self.planner = planner if planner is not None else PlannerAgent(llm=llm)
         self.perception = PerceptionAgent(confidence_threshold=0.4)
         self.selector = SkillSelectorAgent(self.registry)
         self.executor = ExecutorAgent(env, runner)
