@@ -39,6 +39,8 @@ def main() -> int:
     ap.add_argument("--max-chunks", type=int, default=8)
     ap.add_argument("--retry-budget", type=int, default=3)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--record", default=None, help="path to write an mp4 of episode 0")
+    ap.add_argument("--fps", type=int, default=20)
     args = ap.parse_args()
 
     print(f"[Config {args.config}] AGENTIC -> SmolVLA -> MuJoCo | suite={args.suite} "
@@ -66,9 +68,14 @@ def main() -> int:
         planner=SingleTaskPlanner(),      # one end-to-end policy executes the whole task
     )
 
+    if args.record:
+        backend.record = True
+
     reports = []
     for i in range(args.episodes):
         t0 = time.time()
+        if args.record and i == 0:
+            backend.frames = []            # capture only episode 0
         rep = orch.run(seed=i)
         reports.append(rep)
         print(f"  ep {i+1}/{args.episodes}: success={rep['success']} "
@@ -83,6 +90,14 @@ def main() -> int:
             print("  transitions:",
                   " -> ".join(t["to"] for t in rep["transition_log"][:12]),
                   "..." if len(rep["transition_log"]) > 12 else "")
+    if args.record and backend.frames:
+        import numpy as np
+        from lerobot.utils.io_utils import write_video
+        out_path = Path(args.record)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        write_video(str(out_path), np.stack(backend.frames), fps=args.fps)
+        print(f"  video: {out_path}  ({len(backend.frames)} frames @ {args.fps}fps)")
+
     env.close()
 
     sr = sum(r["success"] for r in reports) / len(reports)

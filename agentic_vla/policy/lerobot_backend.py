@@ -74,6 +74,8 @@ class LeRobotMuJoCoBackend:
         self.device = device
         self._raw_obs: dict[str, Any] | None = None
         self._last_success = False
+        self.record = False
+        self.frames: list[np.ndarray] = []
         # instruction comes straight from the LIBERO task (what SmolVLA was trained on)
         try:
             self.instruction = self.env.call("task_description")[0]
@@ -111,6 +113,8 @@ class LeRobotMuJoCoBackend:
         action = np.asarray(action, dtype=np.float32)
         if action.ndim == 1:
             action = action[None, :]
+        if self.record:
+            self._grab_frame()
         obs, reward, terminated, truncated, info = self.env.step(action)
         self._raw_obs = obs
         success = self._extract_success(info)
@@ -134,6 +138,16 @@ class LeRobotMuJoCoBackend:
                     return True
         v = info.get("is_success")
         return bool(np.any(v)) if v is not None else False
+
+    def _grab_frame(self) -> None:
+        """Capture the agentview RGB frame for optional video recording."""
+        try:
+            frames = self.env.call("render")
+            f = frames[0] if isinstance(frames, (list, tuple)) else frames
+            if f is not None:
+                self.frames.append(np.asarray(f, dtype=np.uint8))
+        except Exception:
+            pass
 
     def check_success(self) -> bool:
         return self._last_success
