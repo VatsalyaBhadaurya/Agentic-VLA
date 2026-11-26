@@ -1,0 +1,117 @@
+{
+  "config": "B",
+  "policy": "D:/cache/huggingface/hub/models--HuggingFaceVLA--smolvla_libero/snapshots/6721902bc4d61e50a3bfdb11dfb4cb626f05d102",
+  "suite": "libero_object",
+  "task": 0,
+  "episodes": 1,
+  "success_rate": 1.0,
+  "scoring": "official LIBERO success predicate (vision-only)",
+  "reports": [
+    {
+      "task_id": "0380b4799149",
+      "instruction": "pick up the alphabet soup and place it in the basket",
+      "seed": 0,
+      "success": true,
+      "final_result": "SUCCESS",
+      "subtasks_planned": 1,
+      "subtasks_completed": 1,
+      "policy_calls": 159,
+      "steps": 159,
+      "retries": 0,
+      "replans": 0,
+      "failure_history": [],
+      "scene_graph": {
+        "objects": [],
+        "relationships": []
+      },
+      "memory_hint_used": false,
+      "duration_s": 130.31,
+      "transition_log": [
+        {
+          "t": 1795730874.387,
+          "from": "PLANNING",
+          "to": "PERCEIVING",
+          "note": "",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730874.388,
+          "from": "PERCEIVING",
+          "to": "PLANNING",
+          "note": "",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730874.388,
+          "from": "PLANNING",
+          "to": "SELECTING",
+          "note": "s1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730874.388,
+          "from": "SELECTING",
+          "to": "EXECUTING",
+          "note": "s1 chunk 1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730914.129,
+          "from": "EXECUTING",
+          "to": "CRITIQUING",
+          "note": "s1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730914.129,
+          "from": "CRITIQUING",
+          "to": "EXECUTING",
+          "note": "s1 chunk 2",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730952.1,
+          "from": "EXECUTING",
+          "to": "CRITIQUING",
+          "note": "s1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730952.1,
+          "from": "CRITIQUING",
+          "to": "EXECUTING",
+          "note": "s1 chunk 3",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730990.861,
+          "from": "EXECUTING",
+          "to": "CRITIQUING",
+          "note": "s1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795730990.861,
+          "from": "CRITIQUING",
+          "to": "EXECUTING",
+          "note": "s1 chunk 4",
+          "retry_count": 0
+        },
+        {
+          "t": 1795731001.249,
+          "from": "EXECUTING",
+          "to": "CRITIQUING",
+          "note": "s1",
+          "retry_count": 0
+        },
+        {
+          "t": 1795731001.249,
+          "from": "CRITIQUING",
+          "to": "COMPLETE",
+          "note": "",
+          "retry_count": 0
+        }
+      ]
+    }
+  ]
+}
